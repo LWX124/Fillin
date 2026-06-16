@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, BrainCircuit, ShieldCheck } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
+import { AuthFrame } from "@/components/AppShell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -34,76 +37,79 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Fillin</h1>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
+    <AuthFrame>
+      <div className="surface-panel rounded-3xl p-6">
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_oklch,var(--primary)_18%,transparent)] text-[var(--primary)]">
+              <BrainCircuit size={24} />
+            </span>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight">Fillin</h1>
+              <p className="muted text-sm">Knowledge OS</p>
+            </div>
+          </div>
+          <ThemeToggle />
         </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
+
+        <p className="eyebrow">Secure access</p>
+        <h2 className="mt-2 text-3xl font-black tracking-tight">Enter mission control</h2>
+        <p className="muted mt-2 text-sm leading-6">
+          Continue collecting signals, querying your knowledge graph, and composing from verified context.
+        </p>
+
+        <form onSubmit={handleSubmit} className="mt-7 grid gap-4">
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+            <div className="rounded-2xl border border-[color-mix(in_oklch,var(--danger)_45%,var(--border))] bg-[color-mix(in_oklch,var(--danger)_10%,transparent)] p-3 text-sm font-semibold text-[var(--danger)]">
               {error}
             </div>
           )}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
+          <label className="grid gap-2 text-sm font-bold">
+            Email
             <input
-              id="email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="field"
+              placeholder="you@example.com"
             />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
+          </label>
+          <label className="grid gap-2 text-sm font-bold">
+            Password
             <input
-              id="password"
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="field"
+              placeholder="••••••••"
             />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {loading ? "Signing in..." : "Sign In"}
+          </label>
+          <button type="submit" disabled={loading} className="btn-primary mt-2 w-full">
+            {loading ? "Authenticating" : "Sign in"}
+            <ArrowRight size={17} />
           </button>
         </form>
-        <p className="text-center text-sm text-gray-600">
-          Don&apos;t have an account?{" "}
-          <a href="/register" className="text-blue-600 hover:underline">
-            Sign up
-          </a>
-        </p>
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-gray-500">Or</span>
-          </div>
-        </div>
+
         <button
           type="button"
           onClick={() => {
             window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/google/login`;
           }}
-          className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="btn-secondary mt-3 w-full"
         >
-          使用 Google 登录
+          <ShieldCheck size={17} />
+          Continue with Google
         </button>
+
+        <p className="muted mt-6 text-center text-sm">
+          Need access?{" "}
+          <a href="/register" className="font-bold text-[var(--primary)] hover:underline">
+            Create account
+          </a>
+        </p>
       </div>
-    </div>
+    </AuthFrame>
   );
 }

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Coins, Zap } from "lucide-react";
 import api from "@/lib/api";
+import { AppShell } from "@/components/AppShell";
 
 interface CreditPackage {
   id: string;
@@ -20,7 +22,10 @@ export default function CreditsPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    if (!token) { router.push("/login"); return; }
+    if (!token) {
+      router.push("/login");
+      return;
+    }
     api.get("/credits/packages").then((res) => setPackages(res.data));
     api.get("/credits/balance").then((res) => setBalance(res.data.credits));
   }, [router]);
@@ -33,44 +38,46 @@ export default function CreditsPage() {
         payment_method: "mock",
       });
       setBalance(res.data.new_balance);
-      alert(`充值成功！获得 ${res.data.credits_added} 积分`);
-    } catch {
-      alert("充值失败");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <a href="/dashboard" className="text-xl font-bold text-gray-900">Fillin</a>
-          <span className="text-sm text-gray-600">当前积分: <strong>{balance}</strong></span>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <h2 className="mb-6 text-2xl font-semibold text-gray-900">积分充值</h2>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {packages.map((pkg) => (
-            <div key={pkg.id} className="rounded-lg border bg-white p-6 shadow-sm text-center">
-              <h3 className="text-lg font-bold text-gray-900">{pkg.name}</h3>
-              <p className="mt-2 text-3xl font-bold text-blue-600">{pkg.credits}</p>
-              <p className="text-sm text-gray-500">积分</p>
-              <p className="mt-2 text-lg text-gray-700">${pkg.price}</p>
-              <button
-                onClick={() => handlePurchase(pkg.id)}
-                disabled={loading}
-                className="mt-4 w-full rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                购买
-              </button>
+    <AppShell
+      title="Credit Reactor"
+      subtitle="Manage the compute budget used for crawling, retrieval, and AI content generation."
+    >
+      <section className="surface-panel animate-enter rounded-2xl p-5 lg:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="eyebrow">Current balance</p>
+            <p className="mt-2 text-5xl font-black tracking-tight">{balance}</p>
+          </div>
+          <div className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--accent)_11%,transparent)] p-4">
+            <div className="flex items-center gap-2 font-bold">
+              <Zap size={18} className="text-[var(--accent)]" />
+              Compute ready
             </div>
-          ))}
+            <p className="muted mt-1 text-sm">Mock purchase flow enabled for development.</p>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      <section className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {packages.map((pkg, index) => (
+          <article key={pkg.id} className="surface-card scan-line animate-enter rounded-2xl p-5 text-center" style={{ "--i": index } as React.CSSProperties}>
+            <Coins className="mx-auto text-[var(--primary)]" size={28} />
+            <h3 className="mt-4 text-xl font-black">{pkg.name}</h3>
+            <p className="mt-3 text-4xl font-black text-[var(--primary)]">{pkg.credits}</p>
+            <p className="muted text-sm">credits</p>
+            <p className="mt-4 text-lg font-bold">${pkg.price}</p>
+            <button onClick={() => handlePurchase(pkg.id)} disabled={loading} className="btn-primary mt-5 w-full">
+              Purchase
+            </button>
+          </article>
+        ))}
+      </section>
+    </AppShell>
   );
 }

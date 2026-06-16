@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { ArrowLeft, Send, Sparkles } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
+import { AppShell } from "@/components/AppShell";
 
 interface Message {
   id: string;
@@ -27,7 +29,10 @@ export default function ChatPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    if (!token) { router.push("/login"); return; }
+    if (!token) {
+      router.push("/login");
+      return;
+    }
     if (!user) {
       api.get("/auth/me").then((res) => setUser(res.data)).catch(() => router.push("/login"));
     }
@@ -91,46 +96,36 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="border-b bg-white shadow-sm">
-        <div className="mx-auto flex max-w-4xl items-center gap-4 px-6 py-4">
-          <a href={`/dashboard/kb/${kbId}`} className="text-sm text-blue-600 hover:underline">
-            ← Back to KB
-          </a>
-          <h1 className="text-lg font-bold text-gray-900">Chat</h1>
-          {user && (
-            <span className="ml-auto text-sm text-gray-500">
-              Credits: {user.credits}
-            </span>
-          )}
+    <AppShell
+      title="Conversation Console"
+      subtitle="Ask grounded questions against one knowledge base and inspect the sources inline."
+    >
+      <section className="surface-panel flex min-h-[calc(100vh-8rem)] flex-col rounded-2xl p-4 lg:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <button onClick={() => router.push(`/dashboard/kb/${kbId}`)} className="btn-ghost h-10 px-3">
+            <ArrowLeft size={16} />
+            Back
+          </button>
+          {user && <span className="status-pill">{user.credits} credits</span>}
         </div>
-      </header>
 
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-4">
-        <div className="flex-1 space-y-4 overflow-y-auto pb-4">
+        <div className="flex-1 space-y-4 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--surface)_84%,transparent)] p-4">
           {messages.length === 0 && (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-gray-400">Ask a question about your knowledge base...</p>
+            <div className="flex min-h-[24rem] flex-col items-center justify-center text-center">
+              <Sparkles className="text-[var(--accent)]" size={28} />
+              <p className="mt-3 text-lg font-black">Ready for a grounded question</p>
+              <p className="muted mt-2 max-w-md text-sm leading-6">Answers cite source chunks and stay inside the selected knowledge base.</p>
             </div>
           )}
           {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                  msg.role === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white border shadow-sm text-gray-900"
-                }`}
-              >
-                <p className="whitespace-pre-wrap">{msg.content}</p>
+            <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[min(42rem,92%)] rounded-2xl px-4 py-3 ${msg.role === "user" ? "bg-[linear-gradient(135deg,var(--primary),var(--accent))] text-[oklch(14%_0.03_250)]" : "surface-card text-[var(--foreground)]"}`}>
+                <p className="whitespace-pre-wrap text-sm leading-6">{msg.content}</p>
                 {msg.sources?.references && msg.sources.references.length > 0 && (
-                  <div className="mt-3 border-t pt-2">
-                    <p className="text-xs font-medium text-gray-500">Sources:</p>
+                  <div className="mt-3 border-t border-[var(--border)] pt-2">
+                    <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Sources</p>
                     {msg.sources.references.slice(0, 3).map((s, i) => (
-                      <p key={i} className="mt-1 text-xs text-gray-400 line-clamp-2">
+                      <p key={i} className="mt-1 text-xs leading-5 text-[var(--muted)]">
                         [{i + 1}] {s.text}
                       </p>
                     ))}
@@ -141,32 +136,29 @@ export default function ChatPage() {
           ))}
           {loading && (
             <div className="flex justify-start">
-              <div className="rounded-lg border bg-white px-4 py-3 shadow-sm">
-                <p className="text-gray-400">Thinking...</p>
+              <div className="surface-card rounded-2xl px-4 py-3">
+                <p className="muted text-sm">Thinking...</p>
               </div>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        <form onSubmit={handleSend} className="flex gap-2 border-t bg-white p-4 rounded-lg shadow-sm">
+        <form onSubmit={handleSend} className="mt-4 flex gap-3 rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--surface)_84%,transparent)] p-3">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your question..."
-            className="flex-1 rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+            className="field flex-1"
             disabled={loading}
           />
-          <button
-            type="submit"
-            disabled={loading || !input.trim()}
-            className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
+          <button type="submit" disabled={loading || !input.trim()} className="btn-primary">
+            <Send size={16} />
             Send
           </button>
         </form>
-      </main>
-    </div>
+      </section>
+    </AppShell>
   );
 }

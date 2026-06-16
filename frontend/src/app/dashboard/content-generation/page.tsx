@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileText, Sparkles } from "lucide-react";
 import api from "@/lib/api";
+import { AppShell } from "@/components/AppShell";
 
 interface KnowledgeBase {
   id: string;
@@ -21,7 +23,10 @@ export default function ContentGenerationPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    if (!token) { router.push("/login"); return; }
+    if (!token) {
+      router.push("/login");
+      return;
+    }
     api.get("/knowledge-bases/").then((res) => setKbs(res.data));
   }, [router]);
 
@@ -33,7 +38,10 @@ export default function ContentGenerationPage() {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedKbs.length === 0) { setError("请选择至少一个知识库"); return; }
+    if (selectedKbs.length === 0) {
+      setError("请选择至少一个知识库");
+      return;
+    }
     setLoading(true);
     setError("");
     setResult(null);
@@ -44,94 +52,112 @@ export default function ContentGenerationPage() {
         content_type: contentType,
       });
       setResult(res.data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "生成失败");
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { detail?: string } } }).response
+              ?.data?.detail
+          : undefined;
+      setError(msg || "生成失败");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <a href="/dashboard" className="text-xl font-bold text-gray-900">Fillin</a>
-          <span className="text-sm text-gray-500">AI 内容生成</span>
-        </div>
-      </header>
+    <AppShell
+      title="AI Composition Lab"
+      subtitle="Generate drafts from selected knowledge bases with a clear source boundary and preview the output immediately."
+    >
+      <section className="grid gap-4 xl:grid-cols-[0.46fr_0.54fr]">
+        <form onSubmit={handleGenerate} className="surface-panel animate-enter rounded-2xl p-5 lg:p-6">
+          <p className="eyebrow">Generation setup</p>
+          <h2 className="mt-2 text-2xl font-black tracking-tight">Compose from trusted context</h2>
 
-      <main className="mx-auto max-w-4xl px-6 py-8">
-        <h2 className="mb-6 text-2xl font-semibold text-gray-900">AI 内容生成</h2>
-
-        <form onSubmit={handleGenerate} className="mb-8 rounded-lg border bg-white p-6 shadow-sm space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">选择知识库</label>
-            <div className="flex flex-wrap gap-2">
-              {kbs.map((kb) => (
-                <button
-                  key={kb.id}
-                  type="button"
-                  onClick={() => toggleKb(kb.id)}
-                  className={`rounded-full px-3 py-1 text-sm border ${
-                    selectedKbs.includes(kb.id)
-                      ? "bg-blue-100 border-blue-500 text-blue-700"
-                      : "bg-gray-50 border-gray-300 text-gray-600"
-                  }`}
-                >
-                  {kb.name}
-                </button>
-              ))}
+          <div className="mt-6 grid gap-5">
+            <div>
+              <label className="text-sm font-bold">Knowledge bases</label>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {kbs.map((kb) => (
+                  <button
+                    key={kb.id}
+                    type="button"
+                    onClick={() => toggleKb(kb.id)}
+                    className={`status-pill transition-colors ${
+                      selectedKbs.includes(kb.id)
+                        ? "border-[var(--primary)] bg-[color-mix(in_oklch,var(--primary)_18%,transparent)] text-[var(--foreground)]"
+                        : ""
+                    }`}
+                  >
+                    {kb.name}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            <label className="grid gap-2 text-sm font-bold">
+              Topic
+              <input
+                type="text"
+                required
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="输入你想生成内容的主题"
+                className="field"
+              />
+            </label>
+
+            <label className="grid gap-2 text-sm font-bold">
+              Type
+              <select value={contentType} onChange={(e) => setContentType(e.target.value)} className="field">
+                <option value="article">文章</option>
+                <option value="summary">摘要</option>
+                <option value="report">报告</option>
+              </select>
+            </label>
+
+            {error && <p className="text-sm font-semibold text-[var(--danger)]">{error}</p>}
+
+            <button type="submit" disabled={loading} className="btn-primary w-full">
+              <Sparkles size={17} />
+              {loading ? "Generating..." : "Generate content"}
+            </button>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">主题</label>
-            <input
-              type="text"
-              required
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="输入你想生成内容的主题"
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">类型</label>
-            <select
-              value={contentType}
-              onChange={(e) => setContentType(e.target.value)}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-            >
-              <option value="article">文章</option>
-              <option value="summary">摘要</option>
-              <option value="report">报告</option>
-            </select>
-          </div>
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-md bg-blue-600 px-6 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "生成中..." : "生成内容 (消耗50积分)"}
-          </button>
         </form>
 
-        {result && (
-          <div className="rounded-lg border bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">生成结果</h3>
-              <span className="text-sm text-gray-500">消耗 {result.credits_used} 积分</span>
+        <div className="surface-panel animate-enter rounded-2xl p-5 lg:p-6" style={{ "--i": 1 } as React.CSSProperties}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="eyebrow">Preview</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight">Generated output</h2>
             </div>
-            <div className="prose max-w-none">
-              <pre className="whitespace-pre-wrap text-sm text-gray-800">{result.content}</pre>
-            </div>
+            <FileText className="text-[var(--primary)]" size={26} />
           </div>
-        )}
-      </main>
-    </div>
+
+          {loading && (
+            <div className="mt-6 grid gap-3">
+              <div className="h-4 rounded-full bg-[color-mix(in_oklch,var(--surface-3)_70%,transparent)]" />
+              <div className="h-4 w-4/5 rounded-full bg-[color-mix(in_oklch,var(--surface-3)_70%,transparent)]" />
+              <div className="h-36 rounded-2xl bg-[color-mix(in_oklch,var(--surface-3)_55%,transparent)]" style={{ animation: "pulse-soft 1.2s var(--ease-out-quart) infinite" }} />
+            </div>
+          )}
+
+          {!loading && !result && (
+            <div className="muted mt-12 rounded-2xl border border-dashed border-[var(--border)] p-8 text-center text-sm">
+              Select knowledge bases and generate a draft to preview it here.
+            </div>
+          )}
+
+          {result && (
+            <article className="animate-panel mt-6">
+              <span className="status-pill">Used {result.credits_used} credits</span>
+              <pre className="mt-4 max-h-[34rem] overflow-auto whitespace-pre-wrap rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--surface-2)_70%,transparent)] p-5 text-sm leading-7 text-[var(--foreground)]">
+                {result.content}
+              </pre>
+            </article>
+          )}
+        </div>
+      </section>
+    </AppShell>
   );
 }

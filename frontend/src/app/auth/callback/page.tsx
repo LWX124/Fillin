@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { AuthFrame } from "@/components/AppShell";
 
 function CallbackHandler() {
   const router = useRouter();
@@ -22,15 +23,17 @@ function CallbackHandler() {
     }
   }, [router]);
 
-  return <p className="text-gray-500">登录中...</p>;
+  return <div className="status-pill">Authenticating</div>;
 }
 
 export default function AuthCallbackPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Suspense fallback={<p className="text-gray-500">Loading...</p>}>
-        <CallbackHandler />
-      </Suspense>
-    </div>
+    <AuthFrame>
+      <div className="surface-panel rounded-3xl p-8 text-center">
+        <Suspense fallback={<div className="status-pill">Loading</div>}>
+          <CallbackHandler />
+        </Suspense>
+      </div>
+    </AuthFrame>
   );
 }

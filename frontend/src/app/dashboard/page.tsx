@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowRight, Database, Plus, Trash2, Waves } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
+import { AppShell } from "@/components/AppShell";
 
 interface KnowledgeBase {
   id: string;
@@ -19,6 +22,7 @@ export default function DashboardPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const [creating, setCreating] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -27,10 +31,13 @@ export default function DashboardPage() {
       router.push("/login");
       return;
     }
-    api.get("/auth/me").then((res) => setUser(res.data)).catch(() => {
-      logout();
-      router.push("/login");
-    });
+    api
+      .get("/auth/me")
+      .then((res) => setUser(res.data))
+      .catch(() => {
+        logout();
+        router.push("/login");
+      });
   }, [router, setUser, logout]);
 
   useEffect(() => {
@@ -41,14 +48,19 @@ export default function DashboardPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await api.post("/knowledge-bases/", {
-      name: newName,
-      description: newDesc || null,
-    });
-    setKnowledgeBases([res.data, ...knowledgeBases]);
-    setNewName("");
-    setNewDesc("");
-    setShowCreate(false);
+    setCreating(true);
+    try {
+      const res = await api.post("/knowledge-bases/", {
+        name: newName,
+        description: newDesc || null,
+      });
+      setKnowledgeBases([res.data, ...knowledgeBases]);
+      setNewName("");
+      setNewDesc("");
+      setShowCreate(false);
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -58,123 +70,152 @@ export default function DashboardPage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
+      <div className="app-bg flex min-h-screen items-center justify-center">
+        <div className="status-pill animate-enter">Loading control plane</div>
       </div>
     );
   }
 
+  const totalContents = knowledgeBases.reduce((sum, kb) => sum + kb.content_count, 0);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <h1 className="text-xl font-bold text-gray-900">Fillin</h1>
-          <div className="flex items-center gap-4">
-            <a href="/dashboard/credits" className="text-sm text-blue-600 hover:underline">充值</a>
-            <a href="/dashboard/content-generation" className="text-sm text-blue-600 hover:underline">AI生成</a>
-            <a href="/dashboard/crawlers" className="text-sm text-blue-600 hover:underline">爬虫</a>
-            <a href="/dashboard/settings" className="text-sm text-blue-600 hover:underline">设置</a>
-            <span className="text-sm text-gray-600">
-              Credits: <strong>{user.credits}</strong>
-            </span>
-            <span className="text-sm text-gray-600">{user.username}</span>
-            <button
-              onClick={() => { logout(); router.push("/login"); }}
-              className="text-sm text-red-600 hover:underline"
-            >
-              Logout
-            </button>
+    <AppShell
+      title="Knowledge Mission Control"
+      subtitle="Organize platform signals into searchable knowledge bases, then query or generate from the same operational view."
+    >
+      <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
+        <div className="surface-panel animate-enter rounded-2xl p-5 lg:p-7">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Metric label="Knowledge bases" value={knowledgeBases.length.toString()} />
+            <Metric label="Indexed items" value={totalContents.toString()} />
+            <Metric label="Available credits" value={user.credits.toString()} />
           </div>
         </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-gray-900">Knowledge Bases</h2>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-          >
-            + New Knowledge Base
+        <div className="surface-panel animate-enter rounded-2xl p-5" style={{ "--i": 1 } as React.CSSProperties}>
+          <p className="eyebrow">Next action</p>
+          <h2 className="mt-2 text-xl font-black">Build a focused source cluster</h2>
+          <p className="muted mt-2 text-sm leading-6">
+            Start with one topic-specific knowledge base, then connect crawlers or manual notes.
+          </p>
+          <button type="button" onClick={() => setShowCreate(true)} className="btn-primary mt-4 w-full">
+            <Plus size={17} />
+            New knowledge base
           </button>
         </div>
+      </section>
 
-        {showCreate && (
-          <form
-            onSubmit={handleCreate}
-            className="mb-6 rounded-lg border bg-white p-6 shadow-sm"
-          >
-            <div className="space-y-4">
+      {showCreate && (
+        <form onSubmit={handleCreate} className="surface-panel animate-panel mt-4 rounded-2xl p-5">
+          <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+            <label className="grid gap-2 text-sm font-bold">
+              Name
               <input
                 type="text"
-                placeholder="Knowledge base name"
                 required
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                className="field"
+                placeholder="e.g. AI market signals"
               />
+            </label>
+            <label className="grid gap-2 text-sm font-bold">
+              Description
               <input
                 type="text"
-                placeholder="Description (optional)"
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                className="field"
+                placeholder="Optional operating context"
               />
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-                >
-                  Create
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreate(false)}
-                  className="rounded-md border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-              </div>
+            </label>
+            <div className="flex gap-2">
+              <button type="submit" disabled={creating} className="btn-primary">
+                Create
+              </button>
+              <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary">
+                Cancel
+              </button>
             </div>
-          </form>
-        )}
+          </div>
+        </form>
+      )}
+
+      <section className="mt-4">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="eyebrow">Knowledge grid</p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight">Active knowledge bases</h2>
+          </div>
+          <button type="button" onClick={() => setShowCreate(true)} className="btn-secondary">
+            <Plus size={17} />
+            Add base
+          </button>
+        </div>
 
         {knowledgeBases.length === 0 ? (
-          <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-            <p className="text-gray-500">No knowledge bases yet. Create one to get started.</p>
+          <div className="surface-panel animate-enter rounded-2xl p-10 text-center">
+            <Waves className="mx-auto text-[var(--primary)]" size={36} />
+            <h3 className="mt-4 text-xl font-black">No knowledge base online</h3>
+            <p className="muted mx-auto mt-2 max-w-md text-sm leading-6">
+              Create the first base to unlock content ingestion, vector search, chat, and generation.
+            </p>
+            <button type="button" onClick={() => setShowCreate(true)} className="btn-primary mt-5">
+              <Plus size={17} />
+              Initialize base
+            </button>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {knowledgeBases.map((kb) => (
-              <div
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {knowledgeBases.map((kb, index) => (
+              <article
                 key={kb.id}
-                className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+                className="surface-card scan-line animate-enter rounded-2xl p-5"
+                style={{ "--i": index } as React.CSSProperties}
               >
-                <div className="flex items-start justify-between">
-                  <a
-                    href={`/dashboard/kb/${kb.id}`}
-                    className="text-lg font-medium text-gray-900 hover:text-blue-600"
-                  >
-                    {kb.name}
-                  </a>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[color-mix(in_oklch,var(--primary)_16%,transparent)] text-[var(--primary)]">
+                      <Database size={20} />
+                    </span>
+                    <div>
+                      <Link href={`/dashboard/kb/${kb.id}`} className="text-lg font-black hover:text-[var(--primary)]">
+                        {kb.name}
+                      </Link>
+                      <p className="muted mt-1 line-clamp-2 text-sm leading-6">
+                        {kb.description || "No description configured."}
+                      </p>
+                    </div>
+                  </div>
                   <button
+                    type="button"
+                    aria-label={`Delete ${kb.name}`}
                     onClick={() => handleDelete(kb.id)}
-                    className="text-sm text-red-500 hover:text-red-700"
+                    className="btn-danger h-10 w-10 shrink-0 px-0"
                   >
-                    Delete
+                    <Trash2 size={16} />
                   </button>
                 </div>
-                {kb.description && (
-                  <p className="mt-1 text-sm text-gray-500">{kb.description}</p>
-                )}
-                <p className="mt-3 text-xs text-gray-400">
-                  {kb.content_count} items
-                </p>
-              </div>
+                <div className="mt-5 flex items-center justify-between border-t border-[var(--border)] pt-4">
+                  <span className="status-pill">{kb.content_count} items</span>
+                  <Link href={`/dashboard/kb/${kb.id}`} className="btn-ghost h-10 px-3">
+                    Open
+                    <ArrowRight size={16} />
+                  </Link>
+                </div>
+              </article>
             ))}
           </div>
         )}
-      </main>
+      </section>
+    </AppShell>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--surface-2)_72%,transparent)] p-4">
+      <p className="muted text-xs font-bold uppercase tracking-[0.08em]">{label}</p>
+      <p className="mt-2 text-3xl font-black tracking-tight">{value}</p>
     </div>
   );
 }

@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, BrainCircuit, Sparkles } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
+import { AuthFrame } from "@/components/AppShell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -35,73 +38,85 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Fillin</h1>
-          <p className="mt-2 text-gray-600">Create your account</p>
+    <AuthFrame>
+      <div className="surface-panel rounded-3xl p-6">
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_oklch,var(--primary)_18%,transparent)] text-[var(--primary)]">
+              <BrainCircuit size={24} />
+            </span>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight">Fillin</h1>
+              <p className="muted text-sm">Knowledge OS</p>
+            </div>
+          </div>
+          <ThemeToggle />
         </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
+
+        <p className="eyebrow">Initialize account</p>
+        <h2 className="mt-2 text-3xl font-black tracking-tight">Create your signal hub</h2>
+        <p className="muted mt-2 text-sm leading-6">
+          New users start with credits for ingestion, chat, and AI-assisted composition.
+        </p>
+
+        <form onSubmit={handleSubmit} className="mt-7 grid gap-4">
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+            <div className="rounded-2xl border border-[color-mix(in_oklch,var(--danger)_45%,var(--border))] bg-[color-mix(in_oklch,var(--danger)_10%,transparent)] p-3 text-sm font-semibold text-[var(--danger)]">
               {error}
             </div>
           )}
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-              Username
-            </label>
+          <label className="grid gap-2 text-sm font-bold">
+            Username
             <input
-              id="username"
               type="text"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="field"
+              placeholder="Operator name"
             />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
+          </label>
+          <label className="grid gap-2 text-sm font-bold">
+            Email
             <input
-              id="email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="field"
+              placeholder="you@example.com"
             />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
+          </label>
+          <label className="grid gap-2 text-sm font-bold">
+            Password
             <input
-              id="password"
               type="password"
               required
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="field"
+              placeholder="6 characters minimum"
             />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {loading ? "Creating account..." : "Sign Up"}
+          </label>
+          <button type="submit" disabled={loading} className="btn-primary mt-2 w-full">
+            {loading ? "Creating account" : "Create account"}
+            <ArrowRight size={17} />
           </button>
         </form>
-        <p className="text-center text-sm text-gray-600">
-          Already have an account?{" "}
-          <a href="/login" className="text-blue-600 hover:underline">
+
+        <div className="mt-5 flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--accent)_10%,transparent)] p-3 text-sm">
+          <Sparkles size={17} className="text-[var(--accent)]" />
+          <span className="font-bold">100 starter credits included</span>
+        </div>
+
+        <p className="muted mt-6 text-center text-sm">
+          Already have access?{" "}
+          <a href="/login" className="font-bold text-[var(--primary)] hover:underline">
             Sign in
           </a>
         </p>
       </div>
-    </div>
+    </AuthFrame>
   );
 }
