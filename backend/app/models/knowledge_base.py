@@ -1,0 +1,18 @@
+import uuid
+from datetime import datetime, timezone
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text
+from app.db.base_class import Base
+
+
+class KnowledgeBase(Base):
+    __tablename__ = "knowledge_bases"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    qdrant_collection_name = Column(String(255), unique=True)
+    content_count = Column(Integer, default=0)
+    total_tokens = Column(Integer, default=0)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, onupdate=lambda: datetime.now(timezone.utc))

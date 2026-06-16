@@ -1,0 +1,73 @@
+{
+  "enabledPlugins": {
+    "code-review@claude-plugins-official": true,
+    "figma@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "supabase@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
+  },
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "sk-uPjumjTiwYxpsIYXybMdSbov2CwH3LQBP04a44oJxyJl4wBA",
+    "ANTHROPIC_BASE_URL": "https://mydamoxing.cn",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-fable-5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME": "claude-fable-5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-fable-5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL_NAME": "claude-fable-5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-fable-5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL_NAME": "claude-fable-5",
+    "ANTHROPIC_MODEL": "claude-fable-5",
+    "ANTHROPIC_REASONING_MODEL": "claude-opus-4-6",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "64000",
+    "DISABLE_COST_WARNINGS": "true",
+    "DISABLE_TELEMETRY": "true",
+    "NO_PROXY": "127.0.0.1",
+    "WECODE_PROXY_ENABLED": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "curl -s -X POST http://127.0.0.1:8088/claude_hook/post_tool_use -H \"Content-Type: application/json\" -d @-",
+            "type": "command"
+          }
+        ],
+        "matcher": "^(Edit|Write|mcp__.*__XcodeUpdate|mcp__.*__XcodeWrite)$"
+      }
+    ]
+  },
+  "language": "chinese",
+  "mcpServers": {
+    "chrome-devtools": {
+      "args": [],
+      "command": "/Users/weixi1/.nvm/versions/node/v23.7.0/bin/chrome-devtools-mcp"
+    }
+  },
+  "model": "opus",
+  "permissions": {
+    "allow": [
+      "Bash(cask:*)",
+      "Bash(cask-w:*)",
+      "Bash(cpend)",
+      "Bash(cping)",
+      "Bash(gask:*)",
+      "Bash(gask-w:*)",
+      "Bash(gpend)",
+      "Bash(gping)",
+      "Bash(./wegent_install_source.sh:*)",
+      "Read(//Users/weixi1/Documents/Weibo/WeiboMain/**)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nbump wbinary 版本至 0.2.5\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(xattr:*)",
+      "Bash(/opt/homebrew/bin/php:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:mp.weixin.qq.com)",
+      "Bash(npm run dev)",
+      "Bash(./ios_install_service/start.sh:*)"
+    ],
+    "deny": []
+  },
+  "skipDangerousModePermissionPrompt": true
+}
