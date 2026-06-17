@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Coins, Zap } from "lucide-react";
 import api from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
+import { useRouter } from "@/i18n/navigation";
 
 interface CreditPackage {
   id: string;
@@ -19,6 +20,7 @@ export default function CreditsPage() {
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const t = useTranslations("creditsPage");
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -45,21 +47,21 @@ export default function CreditsPage() {
 
   return (
     <AppShell
-      title="Credit Reactor"
-      subtitle="Manage the compute budget used for crawling, retrieval, and AI content generation."
+      title={t("title")}
+      subtitle={t("subtitle")}
     >
       <section className="surface-panel animate-enter rounded-2xl p-5 lg:p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="eyebrow">Current balance</p>
+            <p className="eyebrow">{t("balance")}</p>
             <p className="mt-2 text-5xl font-black tracking-tight">{balance}</p>
           </div>
           <div className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--accent)_11%,transparent)] p-4">
             <div className="flex items-center gap-2 font-bold">
               <Zap size={18} className="text-[var(--accent)]" />
-              Compute ready
+              {t("ready")}
             </div>
-            <p className="muted mt-1 text-sm">Mock purchase flow enabled for development.</p>
+            <p className="muted mt-1 text-sm">{t("mock")}</p>
           </div>
         </div>
       </section>
@@ -70,10 +72,10 @@ export default function CreditsPage() {
             <Coins className="mx-auto text-[var(--primary)]" size={28} />
             <h3 className="mt-4 text-xl font-black">{pkg.name}</h3>
             <p className="mt-3 text-4xl font-black text-[var(--primary)]">{pkg.credits}</p>
-            <p className="muted text-sm">credits</p>
+            <p className="muted text-sm">{t("credits")}</p>
             <p className="mt-4 text-lg font-bold">${pkg.price}</p>
             <button onClick={() => handlePurchase(pkg.id)} disabled={loading} className="btn-primary mt-5 w-full">
-              Purchase
+              {t("purchase")}
             </button>
           </article>
         ))}

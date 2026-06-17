@@ -14,6 +14,7 @@ class User(Base):
     avatar_url = Column(String(500))
     google_id = Column(String(100), unique=True, nullable=True)
     credits = Column(Integer, default=100, nullable=False)
+    preferred_locale = Column(String(10), default="zh", nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, onupdate=lambda: datetime.now(timezone.utc))

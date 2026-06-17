@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Play, Plus, RefreshCw, RadioTower, Trash2 } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
+import { useRouter } from "@/i18n/navigation";
 
 interface CrawlerTask {
   id: string;
@@ -61,6 +62,8 @@ export default function CrawlersPage() {
   const [targetName, setTargetName] = useState("");
   const [selectedKb, setSelectedKb] = useState("");
   const [intervalHours, setIntervalHours] = useState(24);
+  const t = useTranslations("crawlers");
+  const common = useTranslations("common");
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -135,24 +138,24 @@ export default function CrawlersPage() {
 
   return (
     <AppShell
-      title="Signal Ingestion"
-      subtitle="Launch platform crawlers, monitor imports, and schedule recurring signal collection."
+      title={t("title")}
+      subtitle={t("subtitle")}
     >
       <section className="grid gap-4 xl:grid-cols-[0.68fr_0.32fr]">
         <div className="surface-panel animate-enter rounded-2xl p-5 lg:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="eyebrow">Live crawler tasks</p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight">Ingestion queue</h2>
+              <p className="eyebrow">{t("liveTasks")}</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight">{t("queue")}</h2>
             </div>
             <div className="flex gap-2">
               <button onClick={refreshTasks} className="btn-secondary">
                 <RefreshCw size={17} />
-                Refresh
+                {common("refresh")}
               </button>
               <button onClick={() => setShowCreate(true)} className="btn-primary">
                 <Plus size={17} />
-                New task
+                {t("newTask")}
               </button>
             </div>
           </div>
@@ -170,7 +173,7 @@ export default function CrawlersPage() {
               setTargetUrl={setTargetUrl}
               targetName={targetName}
               setTargetName={setTargetName}
-              submitLabel="Start crawl"
+              submitLabel={t("startCrawl")}
             />
           )}
 
@@ -179,7 +182,7 @@ export default function CrawlersPage() {
 
         <div className="surface-panel animate-enter rounded-2xl p-5" style={{ "--i": 1 } as React.CSSProperties}>
           <RadioTower className="text-[var(--primary)]" size={28} />
-          <h2 className="mt-4 text-xl font-black">Platform adapters</h2>
+          <h2 className="mt-4 text-xl font-black">{t("platformAdapters")}</h2>
           <div className="mt-4 flex flex-wrap gap-2">
             {platforms.map(([value, label]) => (
               <button
@@ -193,7 +196,7 @@ export default function CrawlersPage() {
             ))}
           </div>
           <p className="muted mt-4 text-sm leading-6">
-            Use manual runs for immediate imports and schedules for recurring monitoring.
+            {t("adapterText")}
           </p>
         </div>
       </section>
@@ -201,12 +204,12 @@ export default function CrawlersPage() {
       <section className="surface-panel mt-4 rounded-2xl p-5 lg:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="eyebrow">Scheduled crawls</p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight">Recurring signal loops</h2>
+            <p className="eyebrow">{t("scheduled")}</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight">{t("loops")}</h2>
           </div>
           <button onClick={() => setShowScheduleCreate(true)} className="btn-secondary">
             <Plus size={17} />
-            New schedule
+            {t("newSchedule")}
           </button>
         </div>
 
@@ -225,13 +228,13 @@ export default function CrawlersPage() {
             setTargetName={setTargetName}
             intervalHours={intervalHours}
             setIntervalHours={setIntervalHours}
-            submitLabel="Create schedule"
+            submitLabel={t("createSchedule")}
           />
         )}
 
         {scheduledCrawls.length === 0 ? (
           <div className="muted mt-5 rounded-2xl border border-dashed border-[var(--border)] p-8 text-center text-sm">
-            No scheduled crawls yet.
+            {t("noScheduled")}
           </div>
         ) : (
           <div className="mt-5 grid gap-3">
@@ -242,21 +245,25 @@ export default function CrawlersPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-black">{sc.target_name || sc.target_url}</span>
                       <span className={`status-pill ${sc.is_active ? "text-[var(--success)]" : "muted"}`}>
-                        {sc.is_active ? "Active" : "Paused"}
+                        {sc.is_active ? t("active") : t("paused")}
                       </span>
                     </div>
                     <p className="muted mt-2 text-sm">
-                      {sc.platform} · every {sc.interval_hours}h · next {new Date(sc.next_run_at).toLocaleString()}
+                      {t("scheduleSummary", {
+                        platform: sc.platform,
+                        hours: sc.interval_hours,
+                        time: new Date(sc.next_run_at).toLocaleString(),
+                      })}
                     </p>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => toggleScheduled(sc.id)} className="btn-secondary">
                       <Play size={16} />
-                      {sc.is_active ? "Pause" : "Enable"}
+                      {sc.is_active ? t("pause") : t("enable")}
                     </button>
                     <button onClick={() => deleteScheduled(sc.id)} className="btn-danger">
                       <Trash2 size={16} />
-                      Delete
+                      {common("delete")}
                     </button>
                   </div>
                 </div>
@@ -300,11 +307,14 @@ function CrawlerForm({
   setIntervalHours?: (value: number) => void;
   submitLabel: string;
 }) {
+  const t = useTranslations("crawlers");
+  const common = useTranslations("common");
+
   return (
     <form onSubmit={onSubmit} className="surface-card animate-panel mt-5 rounded-2xl p-5">
       <div className="grid gap-4 lg:grid-cols-2">
         <label className="grid gap-2 text-sm font-bold">
-          Knowledge Base
+          {t("knowledgeBase")}
           <select value={selectedKb} onChange={(e) => setSelectedKb(e.target.value)} className="field">
             {knowledgeBases.map((kb) => (
               <option key={kb.id} value={kb.id}>{kb.name}</option>
@@ -312,7 +322,7 @@ function CrawlerForm({
           </select>
         </label>
         <label className="grid gap-2 text-sm font-bold">
-          Platform
+          {t("platform")}
           <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="field">
             {platforms.map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -320,33 +330,35 @@ function CrawlerForm({
           </select>
         </label>
         <label className="grid gap-2 text-sm font-bold">
-          Target URL
+          {t("targetUrl")}
           <input type="text" required value={targetUrl} onChange={(e) => setTargetUrl(e.target.value)} className="field" placeholder="https://..." />
         </label>
         <label className="grid gap-2 text-sm font-bold">
-          Target name
-          <input type="text" value={targetName} onChange={(e) => setTargetName(e.target.value)} className="field" placeholder="Optional label" />
+          {t("targetName")}
+          <input type="text" value={targetName} onChange={(e) => setTargetName(e.target.value)} className="field" placeholder={t("targetPlaceholder")} />
         </label>
         {typeof intervalHours === "number" && setIntervalHours && (
           <label className="grid gap-2 text-sm font-bold">
-            Interval hours
+            {t("intervalHours")}
             <input type="number" min={1} value={intervalHours} onChange={(e) => setIntervalHours(Number(e.target.value))} className="field" />
           </label>
         )}
       </div>
       <div className="mt-4 flex gap-2">
         <button type="submit" className="btn-primary">{submitLabel}</button>
-        <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>
+        <button type="button" onClick={onCancel} className="btn-secondary">{common("cancel")}</button>
       </div>
     </form>
   );
 }
 
 function TaskList({ tasks }: { tasks: CrawlerTask[] }) {
+  const t = useTranslations("crawlers");
+
   if (tasks.length === 0) {
     return (
       <div className="muted mt-5 rounded-2xl border border-dashed border-[var(--border)] p-8 text-center text-sm">
-        No crawler tasks yet.
+        {t("noTasks")}
       </div>
     );
   }
@@ -362,7 +374,11 @@ function TaskList({ tasks }: { tasks: CrawlerTask[] }) {
                 <Status status={task.status} />
               </div>
               <p className="muted mt-2 text-sm">
-                {task.platform} · {task.items_crawled} crawled · {task.items_imported} imported
+                {t("taskSummary", {
+                  platform: task.platform,
+                  crawled: task.items_crawled,
+                  imported: task.items_imported,
+                })}
               </p>
               {task.error_message && <p className="mt-2 text-sm font-semibold text-[var(--danger)]">{task.error_message}</p>}
             </div>

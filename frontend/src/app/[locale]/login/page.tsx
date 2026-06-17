@@ -1,37 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowRight, BrainCircuit, Sparkles } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { ArrowRight, BrainCircuit, ShieldCheck } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { AuthFrame } from "@/components/AppShell";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { Link, useRouter } from "@/i18n/navigation";
+import { getApiErrorMessage } from "@/lib/errors";
+import type { Locale } from "@/i18n/routing";
+import { setClientLocale } from "@/i18n/locale";
 
-export default function RegisterPage() {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { login } = useAuthStore();
+  const locale = useLocale() as Locale;
+  const common = useTranslations("common");
+  const t = useTranslations("auth");
+  const errors = useTranslations("errors");
+  const { login, setUser } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const res = await api.post("/auth/register", { email, username, password });
+      const res = await api.post("/auth/login", { email, password });
       login(res.data.access_token, res.data.refresh_token);
+      const me = await api.get("/auth/me");
+      setUser(me.data);
+      setClientLocale(locale);
       router.push("/dashboard");
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { detail?: string } } }).response
-              ?.data?.detail
-          : undefined;
-      setError(msg || "Registration failed");
+      setError(getApiErrorMessage(err, errors, "UNKNOWN") || t("loginFailed"));
     } finally {
       setLoading(false);
     }
@@ -46,17 +52,20 @@ export default function RegisterPage() {
               <BrainCircuit size={24} />
             </span>
             <div>
-              <h1 className="text-2xl font-black tracking-tight">Fillin</h1>
-              <p className="muted text-sm">Knowledge OS</p>
+              <h1 className="text-2xl font-black tracking-tight">{common("appName")}</h1>
+              <p className="muted text-sm">{common("knowledgeOs")}</p>
             </div>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LocaleSwitcher />
+            <ThemeToggle />
+          </div>
         </div>
 
-        <p className="eyebrow">Initialize account</p>
-        <h2 className="mt-2 text-3xl font-black tracking-tight">Create your signal hub</h2>
+        <p className="eyebrow">{t("secureAccess")}</p>
+        <h2 className="mt-2 text-3xl font-black tracking-tight">{t("loginTitle")}</h2>
         <p className="muted mt-2 text-sm leading-6">
-          New users start with credits for ingestion, chat, and AI-assisted composition.
+          {t("loginSubtitle")}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-7 grid gap-4">
@@ -66,18 +75,7 @@ export default function RegisterPage() {
             </div>
           )}
           <label className="grid gap-2 text-sm font-bold">
-            Username
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="field"
-              placeholder="Operator name"
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-bold">
-            Email
+            {t("email")}
             <input
               type="email"
               required
@@ -88,33 +86,38 @@ export default function RegisterPage() {
             />
           </label>
           <label className="grid gap-2 text-sm font-bold">
-            Password
+            {t("password")}
             <input
               type="password"
               required
-              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="field"
-              placeholder="6 characters minimum"
+              placeholder="••••••••"
             />
           </label>
           <button type="submit" disabled={loading} className="btn-primary mt-2 w-full">
-            {loading ? "Creating account" : "Create account"}
+            {loading ? t("authenticating") : t("signIn")}
             <ArrowRight size={17} />
           </button>
         </form>
 
-        <div className="mt-5 flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--accent)_10%,transparent)] p-3 text-sm">
-          <Sparkles size={17} className="text-[var(--accent)]" />
-          <span className="font-bold">100 starter credits included</span>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/google/login?locale=${locale}`;
+          }}
+          className="btn-secondary mt-3 w-full"
+        >
+          <ShieldCheck size={17} />
+          {t("google")}
+        </button>
 
         <p className="muted mt-6 text-center text-sm">
-          Already have access?{" "}
-          <a href="/login" className="font-bold text-[var(--primary)] hover:underline">
-            Sign in
-          </a>
+          {t("needAccess")}{" "}
+          <Link href="/register" className="font-bold text-[var(--primary)] hover:underline">
+            {t("createAccount")}
+          </Link>
         </p>
       </div>
     </AuthFrame>

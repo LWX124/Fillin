@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ArrowRight, Database, Plus, Trash2, Waves } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
+import { Link, useRouter } from "@/i18n/navigation";
 
 interface KnowledgeBase {
   id: string;
@@ -24,6 +24,8 @@ export default function DashboardPage() {
   const [newDesc, setNewDesc] = useState("");
   const [creating, setCreating] = useState(false);
   const router = useRouter();
+  const t = useTranslations("dashboard");
+  const common = useTranslations("common");
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -71,7 +73,7 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <div className="app-bg flex min-h-screen items-center justify-center">
-        <div className="status-pill animate-enter">Loading control plane</div>
+        <div className="status-pill animate-enter">{t("loading")}</div>
       </div>
     );
   }
@@ -80,26 +82,26 @@ export default function DashboardPage() {
 
   return (
     <AppShell
-      title="Knowledge Mission Control"
-      subtitle="Organize platform signals into searchable knowledge bases, then query or generate from the same operational view."
+      title={t("title")}
+      subtitle={t("subtitle")}
     >
       <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
         <div className="surface-panel animate-enter rounded-2xl p-5 lg:p-7">
           <div className="grid gap-4 md:grid-cols-3">
-            <Metric label="Knowledge bases" value={knowledgeBases.length.toString()} />
-            <Metric label="Indexed items" value={totalContents.toString()} />
-            <Metric label="Available credits" value={user.credits.toString()} />
+            <Metric label={t("knowledgeBases")} value={knowledgeBases.length.toString()} />
+            <Metric label={t("indexedItems")} value={totalContents.toString()} />
+            <Metric label={t("availableCredits")} value={user.credits.toString()} />
           </div>
         </div>
         <div className="surface-panel animate-enter rounded-2xl p-5" style={{ "--i": 1 } as React.CSSProperties}>
-          <p className="eyebrow">Next action</p>
-          <h2 className="mt-2 text-xl font-black">Build a focused source cluster</h2>
+          <p className="eyebrow">{t("nextAction")}</p>
+          <h2 className="mt-2 text-xl font-black">{t("buildCluster")}</h2>
           <p className="muted mt-2 text-sm leading-6">
-            Start with one topic-specific knowledge base, then connect crawlers or manual notes.
+            {t("buildClusterText")}
           </p>
           <button type="button" onClick={() => setShowCreate(true)} className="btn-primary mt-4 w-full">
             <Plus size={17} />
-            New knowledge base
+            {t("newKnowledgeBase")}
           </button>
         </div>
       </section>
@@ -108,32 +110,32 @@ export default function DashboardPage() {
         <form onSubmit={handleCreate} className="surface-panel animate-panel mt-4 rounded-2xl p-5">
           <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
             <label className="grid gap-2 text-sm font-bold">
-              Name
+              {t("name")}
               <input
                 type="text"
                 required
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 className="field"
-                placeholder="e.g. AI market signals"
+                placeholder={t("namePlaceholder")}
               />
             </label>
             <label className="grid gap-2 text-sm font-bold">
-              Description
+              {t("description")}
               <input
                 type="text"
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
                 className="field"
-                placeholder="Optional operating context"
+                placeholder={t("descriptionPlaceholder")}
               />
             </label>
             <div className="flex gap-2">
               <button type="submit" disabled={creating} className="btn-primary">
-                Create
+                {common("create")}
               </button>
               <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary">
-                Cancel
+                {common("cancel")}
               </button>
             </div>
           </div>
@@ -143,25 +145,25 @@ export default function DashboardPage() {
       <section className="mt-4">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="eyebrow">Knowledge grid</p>
-            <h2 className="mt-1 text-2xl font-black tracking-tight">Active knowledge bases</h2>
+            <p className="eyebrow">{t("knowledgeGrid")}</p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight">{t("activeBases")}</h2>
           </div>
           <button type="button" onClick={() => setShowCreate(true)} className="btn-secondary">
             <Plus size={17} />
-            Add base
+            {t("addBase")}
           </button>
         </div>
 
         {knowledgeBases.length === 0 ? (
           <div className="surface-panel animate-enter rounded-2xl p-10 text-center">
             <Waves className="mx-auto text-[var(--primary)]" size={36} />
-            <h3 className="mt-4 text-xl font-black">No knowledge base online</h3>
+            <h3 className="mt-4 text-xl font-black">{t("emptyTitle")}</h3>
             <p className="muted mx-auto mt-2 max-w-md text-sm leading-6">
-              Create the first base to unlock content ingestion, vector search, chat, and generation.
+              {t("emptyText")}
             </p>
             <button type="button" onClick={() => setShowCreate(true)} className="btn-primary mt-5">
               <Plus size={17} />
-              Initialize base
+              {t("initializeBase")}
             </button>
           </div>
         ) : (
@@ -182,13 +184,13 @@ export default function DashboardPage() {
                         {kb.name}
                       </Link>
                       <p className="muted mt-1 line-clamp-2 text-sm leading-6">
-                        {kb.description || "No description configured."}
+                        {kb.description || t("noDescription")}
                       </p>
                     </div>
                   </div>
                   <button
                     type="button"
-                    aria-label={`Delete ${kb.name}`}
+                    aria-label={t("deleteBase", { name: kb.name })}
                     onClick={() => handleDelete(kb.id)}
                     className="btn-danger h-10 w-10 shrink-0 px-0"
                   >
@@ -196,9 +198,9 @@ export default function DashboardPage() {
                   </button>
                 </div>
                 <div className="mt-5 flex items-center justify-between border-t border-[var(--border)] pt-4">
-                  <span className="status-pill">{kb.content_count} items</span>
+                  <span className="status-pill">{t("items", { count: kb.content_count })}</span>
                   <Link href={`/dashboard/kb/${kb.id}`} className="btn-ghost h-10 px-3">
-                    Open
+                    {common("open")}
                     <ArrowRight size={16} />
                   </Link>
                 </div>

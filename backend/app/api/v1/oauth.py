@@ -30,6 +30,10 @@ async def google_login(request: Request):
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=501, detail="Google OAuth not configured")
     redirect_uri = settings.GOOGLE_REDIRECT_URI
+    locale = request.query_params.get("locale", "zh")
+    if locale not in {"zh", "en"}:
+        locale = "zh"
+    request.session["oauth_locale"] = locale
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
@@ -48,6 +52,9 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         email = user_info["email"]
         username = user_info.get("name", email.split("@")[0])
         avatar_url = user_info.get("picture")
+        locale = request.session.pop("oauth_locale", "zh")
+        if locale not in {"zh", "en"}:
+            locale = "zh"
 
         user = db.query(User).filter(User.google_id == google_id).first()
 
@@ -65,6 +72,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
                     avatar_url=avatar_url,
                     password_hash="",
                     credits=100,
+                    preferred_locale=locale,
                 )
                 db.add(user)
             db.commit()
@@ -73,7 +81,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         access_token = create_access_token(data={"sub": user.id})
         refresh_token = create_refresh_token(data={"sub": user.id})
 
-        frontend_url = f"{settings.FRONTEND_URL}/auth/callback#access_token={access_token}&refresh_token={refresh_token}"
+        frontend_url = f"{settings.FRONTEND_URL}/{locale}/auth/callback#access_token={access_token}&refresh_token={refresh_token}"
         return RedirectResponse(url=frontend_url)
 
     except Exception as e:

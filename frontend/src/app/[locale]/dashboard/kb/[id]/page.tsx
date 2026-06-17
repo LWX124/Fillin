@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Bot, FilePlus2, Trash2 } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
+import { Link, useRouter } from "@/i18n/navigation";
 
 interface Content {
   id: string;
@@ -30,6 +31,8 @@ export default function KBDetailPage() {
   const kbId = params.id as string;
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
+  const t = useTranslations("kb");
+  const common = useTranslations("common");
   const [kb, setKb] = useState<KnowledgeBase | null>(null);
   const [contents, setContents] = useState<Content[]>([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -69,7 +72,7 @@ export default function KBDetailPage() {
   if (!kb) {
     return (
       <div className="app-bg flex min-h-screen items-center justify-center">
-        <div className="status-pill animate-enter">Loading base</div>
+        <div className="status-pill animate-enter">{t("loading")}</div>
       </div>
     );
   }
@@ -77,27 +80,27 @@ export default function KBDetailPage() {
   return (
     <AppShell
       title={kb.name}
-      subtitle={kb.description || "Operational knowledge base. Add raw notes or crawled material, then move into chat or generation."}
+      subtitle={kb.description || t("fallbackSubtitle")}
     >
       <section className="grid gap-4 xl:grid-cols-[0.72fr_0.28fr]">
         <div className="surface-panel animate-enter rounded-2xl p-5 lg:p-6">
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/dashboard" className="btn-ghost h-10 px-3">
               <ArrowLeft size={16} />
-              Back
+              {common("back")}
             </Link>
-            <span className="status-pill">{contents.length} contents</span>
-            <span className="status-pill">{kb.content_count} indexed</span>
+            <span className="status-pill">{t("contents", { count: contents.length })}</span>
+            <span className="status-pill">{t("indexed", { count: kb.content_count })}</span>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Link href={`/dashboard/kb/${kbId}/chat`} className="btn-primary">
               <Bot size={17} />
-              Chat with base
+              {t("chat")}
             </Link>
             <button onClick={() => setShowAdd(true)} className="btn-secondary">
               <FilePlus2 size={17} />
-              Add content
+              {t("addContent")}
             </button>
           </div>
 
@@ -105,29 +108,29 @@ export default function KBDetailPage() {
             <form onSubmit={handleAdd} className="surface-card mt-5 rounded-2xl p-5">
               <div className="grid gap-4">
                 <label className="grid gap-2 text-sm font-bold">
-                  Title
+                  {t("title")}
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="field"
-                    placeholder="Topic or source title"
+                    placeholder={t("titlePlaceholder")}
                   />
                 </label>
                 <label className="grid gap-2 text-sm font-bold">
-                  Content
+                  {t("content")}
                   <textarea
                     required
                     rows={8}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     className="field resize-none"
-                    placeholder="Paste or type content here"
+                    placeholder={t("contentPlaceholder")}
                   />
                 </label>
                 <label className="grid gap-2 text-sm font-bold">
-                  Source URL
+                  {t("sourceUrl")}
                   <input
                     type="url"
                     value={sourceUrl}
@@ -137,8 +140,8 @@ export default function KBDetailPage() {
                   />
                 </label>
                 <div className="flex gap-2">
-                  <button type="submit" className="btn-primary">Save</button>
-                  <button type="button" onClick={() => setShowAdd(false)} className="btn-secondary">Cancel</button>
+                  <button type="submit" className="btn-primary">{common("save")}</button>
+                  <button type="button" onClick={() => setShowAdd(false)} className="btn-secondary">{common("cancel")}</button>
                 </div>
               </div>
             </form>
@@ -146,10 +149,10 @@ export default function KBDetailPage() {
         </div>
 
         <div className="surface-panel animate-enter rounded-2xl p-5" style={{ "--i": 1 } as React.CSSProperties}>
-          <p className="eyebrow">Signal status</p>
-          <h3 className="mt-2 text-xl font-black">Vector readiness</h3>
+          <p className="eyebrow">{t("signalStatus")}</p>
+          <h3 className="mt-2 text-xl font-black">{t("vectorReadiness")}</h3>
           <p className="muted mt-2 text-sm leading-6">
-            Newly added content enters the base immediately; vectorization can be tracked from the content lane.
+            {t("vectorText")}
           </p>
         </div>
       </section>
@@ -157,14 +160,14 @@ export default function KBDetailPage() {
       <section className="mt-4">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="eyebrow">Content lane</p>
-            <h2 className="mt-1 text-2xl font-black tracking-tight">Knowledge entries</h2>
+            <p className="eyebrow">{t("contentLane")}</p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight">{t("entries")}</h2>
           </div>
         </div>
 
         {contents.length === 0 ? (
           <div className="surface-panel rounded-2xl p-10 text-center">
-            <p className="muted text-sm">No content yet. Add a note or bring data in through crawlers.</p>
+            <p className="muted text-sm">{t("empty")}</p>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -180,15 +183,15 @@ export default function KBDetailPage() {
                     <p className="muted mt-2 line-clamp-3 text-sm leading-6">{item.content}</p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {item.source_platform && <span className="status-pill">{item.source_platform}</span>}
-                      <span className="status-pill">{item.is_vectorized ? "Vectorized" : "Pending vector"}</span>
+                      <span className="status-pill">{item.is_vectorized ? t("vectorized") : t("pendingVector")}</span>
                       {item.source_url && (
                         <a href={item.source_url} target="_blank" rel="noreferrer" className="btn-ghost h-9 px-3">
-                          Source
+                          {common("source")}
                         </a>
                       )}
                     </div>
                   </div>
-                  <button type="button" onClick={() => handleDelete(item.id)} className="btn-danger h-10 w-10 shrink-0 px-0" aria-label={`Delete ${item.title}`}>
+                  <button type="button" onClick={() => handleDelete(item.id)} className="btn-danger h-10 w-10 shrink-0 px-0" aria-label={t("deleteContent", { title: item.title })}>
                     <Trash2 size={16} />
                   </button>
                 </div>

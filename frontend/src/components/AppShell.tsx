@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Bot,
   BrainCircuit,
@@ -14,19 +13,21 @@ import {
 } from "lucide-react";
 import { ThemeSignal, ThemeToggle } from "./ThemeToggle";
 import { useAuthStore } from "@/lib/store";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 
 const navItems = [
-  { href: "/dashboard", label: "Knowledge", icon: Database },
-  { href: "/dashboard/crawlers", label: "Signals", icon: RadioTower },
-  { href: "/dashboard/content-generation", label: "Compose", icon: Sparkles },
-  { href: "/dashboard/credits", label: "Credits", icon: Coins },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", labelKey: "knowledge", icon: Database },
+  { href: "/dashboard/crawlers", labelKey: "signals", icon: RadioTower },
+  { href: "/dashboard/content-generation", labelKey: "compose", icon: Sparkles },
+  { href: "/dashboard/credits", labelKey: "credits", icon: Coins },
+  { href: "/dashboard/settings", labelKey: "settings", icon: Settings },
 ];
 
 export function AppShell({
   children,
-  title = "Mission Control",
-  subtitle = "AI content aggregation and knowledge operations.",
+  title,
+  subtitle,
 }: {
   children: React.ReactNode;
   title?: string;
@@ -35,6 +36,12 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const nav = useTranslations("nav");
+  const common = useTranslations("common");
+  const shell = useTranslations("shell");
+
+  const pageTitle = title || shell("defaultTitle");
+  const pageSubtitle = subtitle || shell("defaultSubtitle");
 
   return (
     <div className="app-bg relative min-h-screen overflow-x-hidden">
@@ -46,8 +53,8 @@ export function AppShell({
               <BrainCircuit size={22} />
             </span>
             <span>
-              <span className="block text-lg font-black tracking-tight">Fillin</span>
-              <span className="muted block text-xs font-semibold">Knowledge OS</span>
+              <span className="block text-lg font-black tracking-tight">{common("appName")}</span>
+              <span className="muted block text-xs font-semibold">{common("knowledgeOs")}</span>
             </span>
           </Link>
 
@@ -68,7 +75,7 @@ export function AppShell({
                   }`}
                 >
                   <Icon size={18} className={active ? "text-[var(--primary)]" : "transition-colors group-hover:text-[var(--primary)]"} />
-                  {item.label}
+                  {nav(item.labelKey)}
                 </Link>
               );
             })}
@@ -78,15 +85,16 @@ export function AppShell({
             <div className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--surface-2)_72%,transparent)] p-4">
               <div className="flex items-center gap-2 text-sm font-bold">
                 <Bot size={16} className="text-[var(--accent)]" />
-                AI Runtime
+                {shell("runtime")}
               </div>
               <div className="mt-3 h-2 rounded-full bg-[color-mix(in_oklch,var(--surface-3)_70%,transparent)]">
                 <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-[var(--primary)] to-[var(--accent)]" />
               </div>
-              <p className="muted mt-2 text-xs">Retrieval, crawl, compose lanes online.</p>
+              <p className="muted mt-2 text-xs">{shell("runtimeStatus")}</p>
             </div>
 
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <LocaleSwitcher />
               <ThemeToggle />
               <button
                 type="button"
@@ -97,7 +105,7 @@ export function AppShell({
                 className="btn-ghost h-11 px-3"
               >
                 <LogOut size={17} />
-                <span className="hidden sm:inline">Logout</span>
+                <span className="hidden sm:inline">{common("logout")}</span>
               </button>
             </div>
           </div>
@@ -109,10 +117,10 @@ export function AppShell({
               <div>
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <ThemeSignal />
-                  {user && <span className="status-pill">{user.credits} credits</span>}
+                  {user && <span className="status-pill">{shell("creditBadge", { count: user.credits })}</span>}
                 </div>
-                <h1 className="text-2xl font-black tracking-tight md:text-3xl">{title}</h1>
-                <p className="muted mt-1 max-w-2xl text-sm leading-6">{subtitle}</p>
+                <h1 className="text-2xl font-black tracking-tight md:text-3xl">{pageTitle}</h1>
+                <p className="muted mt-1 max-w-2xl text-sm leading-6">{pageSubtitle}</p>
               </div>
               {user && (
                 <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--surface-2)_70%,transparent)] px-3 py-2">

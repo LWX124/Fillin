@@ -1,11 +1,13 @@
 "use client";
 
 import { Suspense, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { AuthFrame } from "@/components/AppShell";
+import { useRouter } from "@/i18n/navigation";
 
 function CallbackHandler() {
   const router = useRouter();
+  const t = useTranslations("auth");
 
   useEffect(() => {
     const hash = window.location.hash.substring(1);
@@ -23,14 +25,16 @@ function CallbackHandler() {
     }
   }, [router]);
 
-  return <div className="status-pill">Authenticating</div>;
+  return <div className="status-pill">{t("authenticating")}</div>;
 }
 
 export default function AuthCallbackPage() {
+  const common = useTranslations("common");
+
   return (
     <AuthFrame>
       <div className="surface-panel rounded-3xl p-8 text-center">
-        <Suspense fallback={<div className="status-pill">Loading</div>}>
+        <Suspense fallback={<div className="status-pill">{common("loading")}</div>}>
           <CallbackHandler />
         </Suspense>
       </div>

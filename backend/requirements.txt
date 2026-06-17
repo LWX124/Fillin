@@ -17,6 +17,7 @@ python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 pydantic[email]>=2.5.3
 authlib>=1.7.0
+itsdangerous>=2.1.2
 
 # OpenAI & LangChain
 openai>=1.10.0

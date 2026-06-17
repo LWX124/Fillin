@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from app.api.v1 import api_router
 from app.core.config import settings
 
@@ -8,6 +9,8 @@ app = FastAPI(
     description="AI-powered content aggregation and knowledge management platform",
     version="0.1.0"
 )
+
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 app.add_middleware(
     CORSMiddleware,

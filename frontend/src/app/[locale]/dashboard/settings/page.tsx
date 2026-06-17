@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { KeyRound, Plus, Trash2 } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
+import { useRouter } from "@/i18n/navigation";
 
 interface APIKey {
   id: string;
@@ -22,6 +23,8 @@ export default function SettingsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [provider, setProvider] = useState("deepseek");
   const [apiKey, setApiKey] = useState("");
+  const t = useTranslations("settings");
+  const common = useTranslations("common");
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -55,18 +58,18 @@ export default function SettingsPage() {
 
   return (
     <AppShell
-      title="Provider Settings"
-      subtitle="Connect personal model providers and keep API credentials scoped to your own account."
+      title={t("title")}
+      subtitle={t("subtitle")}
     >
       <section className="surface-panel animate-enter rounded-2xl p-5 lg:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="eyebrow">LLM providers</p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight">API key vault</h2>
+            <p className="eyebrow">{t("providers")}</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight">{t("vault")}</h2>
           </div>
           <button onClick={() => setShowAdd(true)} className="btn-primary">
             <Plus size={17} />
-            Add API key
+            {t("addKey")}
           </button>
         </div>
 
@@ -74,7 +77,7 @@ export default function SettingsPage() {
           <form onSubmit={handleAdd} className="surface-card animate-panel mt-5 rounded-2xl p-5">
             <div className="grid gap-4 md:grid-cols-[0.35fr_1fr_auto] md:items-end">
               <label className="grid gap-2 text-sm font-bold">
-                Provider
+                {t("provider")}
                 <select value={provider} onChange={(e) => setProvider(e.target.value)} className="field">
                   <option value="deepseek">DeepSeek</option>
                   <option value="openai">OpenAI</option>
@@ -82,7 +85,7 @@ export default function SettingsPage() {
                 </select>
               </label>
               <label className="grid gap-2 text-sm font-bold">
-                API Key
+                {t("apiKey")}
                 <input
                   type="password"
                   required
@@ -93,8 +96,8 @@ export default function SettingsPage() {
                 />
               </label>
               <div className="flex gap-2">
-                <button type="submit" className="btn-primary">Save</button>
-                <button type="button" onClick={() => setShowAdd(false)} className="btn-secondary">Cancel</button>
+                <button type="submit" className="btn-primary">{common("save")}</button>
+                <button type="button" onClick={() => setShowAdd(false)} className="btn-secondary">{common("cancel")}</button>
               </div>
             </div>
           </form>
@@ -105,7 +108,7 @@ export default function SettingsPage() {
         {apiKeys.length === 0 ? (
           <div className="surface-panel rounded-2xl p-10 text-center">
             <KeyRound className="mx-auto text-[var(--primary)]" size={30} />
-            <p className="muted mt-3 text-sm">No API key configured. Add one to use personal provider billing.</p>
+            <p className="muted mt-3 text-sm">{t("empty")}</p>
           </div>
         ) : (
           apiKeys.map((k, index) => (
@@ -122,7 +125,7 @@ export default function SettingsPage() {
                 </div>
                 <button onClick={() => handleDelete(k.id)} className="btn-danger">
                   <Trash2 size={16} />
-                  Delete
+                  {common("delete")}
                 </button>
               </div>
             </article>

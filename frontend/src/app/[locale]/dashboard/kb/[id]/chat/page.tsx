@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Send, Sparkles } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
+import { getApiErrorMessage } from "@/lib/errors";
+import { useRouter } from "@/i18n/navigation";
 
 interface Message {
   id: string;
@@ -26,6 +29,9 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("chat");
+  const common = useTranslations("common");
+  const errors = useTranslations("errors");
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -45,7 +51,7 @@ export default function ChatPage() {
   const ensureConversation = async (): Promise<string> => {
     if (convId) return convId;
     const res = await api.post("/conversations/", {
-      title: "New Chat",
+      title: t("newTitle"),
       knowledge_base_ids: [kbId],
     });
     setConvId(res.data.id);
@@ -82,13 +88,10 @@ export default function ChatPage() {
         setUser({ ...user, credits: user.credits - res.data.credits_used });
       }
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-          : undefined;
+      const msg = getApiErrorMessage(err, errors, "UNKNOWN");
       setMessages((prev) => [
         ...prev,
-        { id: (Date.now() + 1).toString(), role: "assistant", content: msg || "Error: failed to get response", credits_used: 0, created_at: new Date().toISOString() },
+        { id: (Date.now() + 1).toString(), role: "assistant", content: msg || t("failed"), credits_used: 0, created_at: new Date().toISOString() },
       ]);
     } finally {
       setLoading(false);
@@ -97,24 +100,24 @@ export default function ChatPage() {
 
   return (
     <AppShell
-      title="Conversation Console"
-      subtitle="Ask grounded questions against one knowledge base and inspect the sources inline."
+      title={t("title")}
+      subtitle={t("subtitle")}
     >
       <section className="surface-panel flex min-h-[calc(100vh-8rem)] flex-col rounded-2xl p-4 lg:p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
           <button onClick={() => router.push(`/dashboard/kb/${kbId}`)} className="btn-ghost h-10 px-3">
             <ArrowLeft size={16} />
-            Back
+            {common("back")}
           </button>
-          {user && <span className="status-pill">{user.credits} credits</span>}
+          {user && <span className="status-pill">{user.credits} {common("credits")}</span>}
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklch,var(--surface)_84%,transparent)] p-4">
           {messages.length === 0 && (
             <div className="flex min-h-[24rem] flex-col items-center justify-center text-center">
               <Sparkles className="text-[var(--accent)]" size={28} />
-              <p className="mt-3 text-lg font-black">Ready for a grounded question</p>
-              <p className="muted mt-2 max-w-md text-sm leading-6">Answers cite source chunks and stay inside the selected knowledge base.</p>
+              <p className="mt-3 text-lg font-black">{t("emptyTitle")}</p>
+              <p className="muted mt-2 max-w-md text-sm leading-6">{t("emptyText")}</p>
             </div>
           )}
           {messages.map((msg) => (
@@ -123,7 +126,7 @@ export default function ChatPage() {
                 <p className="whitespace-pre-wrap text-sm leading-6">{msg.content}</p>
                 {msg.sources?.references && msg.sources.references.length > 0 && (
                   <div className="mt-3 border-t border-[var(--border)] pt-2">
-                    <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Sources</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{t("sources")}</p>
                     {msg.sources.references.slice(0, 3).map((s, i) => (
                       <p key={i} className="mt-1 text-xs leading-5 text-[var(--muted)]">
                         [{i + 1}] {s.text}
@@ -137,7 +140,7 @@ export default function ChatPage() {
           {loading && (
             <div className="flex justify-start">
               <div className="surface-card rounded-2xl px-4 py-3">
-                <p className="muted text-sm">Thinking...</p>
+                <p className="muted text-sm">{t("thinking")}</p>
               </div>
             </div>
           )}
@@ -149,13 +152,13 @@ export default function ChatPage() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your question..."
+            placeholder={t("placeholder")}
             className="field flex-1"
             disabled={loading}
           />
           <button type="submit" disabled={loading || !input.trim()} className="btn-primary">
             <Send size={16} />
-            Send
+            {t("send")}
           </button>
         </form>
       </section>
