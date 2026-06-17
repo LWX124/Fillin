@@ -28,6 +28,19 @@ fi
 echo "Starting infrastructure services..."
 docker compose -f "$ROOT_DIR/docker-compose.yml" up -d postgres redis qdrant
 
+echo "Waiting for PostgreSQL to become ready..."
+for _ in {1..30}; do
+  if docker compose -f "$ROOT_DIR/docker-compose.yml" exec -T postgres pg_isready -U fillin >/dev/null 2>&1; then
+    break
+  fi
+  sleep 2
+done
+
+if ! docker compose -f "$ROOT_DIR/docker-compose.yml" exec -T postgres pg_isready -U fillin >/dev/null 2>&1; then
+  echo "PostgreSQL did not become ready in time."
+  exit 1
+fi
+
 echo "Running database migrations..."
 (cd "$BACKEND_DIR" && .venv/bin/alembic upgrade head)
 
