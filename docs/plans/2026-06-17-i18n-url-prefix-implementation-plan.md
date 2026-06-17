@@ -37,7 +37,9 @@ Files likely touched:
 
 - `frontend/package.json`
 - `frontend/package-lock.json`
-- `frontend/middleware.ts`
+- `frontend/next.config.ts`
+- `frontend/src/proxy.ts` or `frontend/middleware.ts` as a compatibility
+  fallback
 - `frontend/src/i18n/routing.ts`
 - `frontend/src/i18n/navigation.ts`
 - `frontend/src/i18n/request.ts`
@@ -49,18 +51,25 @@ Files likely touched:
 Tasks:
 
 1. Install `next-intl`.
-2. Configure supported locales: `zh`, `en`.
-3. Map locale prefixes to document languages: `zh -> zh-CN`, `en -> en`.
-4. Add `next-intl` request config and message loading.
-5. Add middleware to redirect `/`, `/login`, `/register`, `/dashboard`, and
-   other app routes without locale prefixes.
-6. Add a locale layout that provides messages to client components.
+2. Wrap `frontend/next.config.ts` with the `next-intl` plugin.
+3. Configure supported locales: `zh`, `en`.
+4. Map locale prefixes to document languages: `zh -> zh-CN`, `en -> en`.
+5. Add `next-intl` request config and message loading.
+6. Add `frontend/src/proxy.ts` to redirect `/`, `/login`, `/register`,
+   `/dashboard`, and other app routes without locale prefixes.
+7. Exclude API routes, `_next`, static assets, and file-extension paths from the
+   proxy matcher.
+8. If the installed Next.js version requires the older convention, use the same
+   redirect logic in `middleware.ts` and keep it easy to rename later.
+9. Add a locale layout that provides messages to client components.
 
 Acceptance checks:
 
 - `/zh/login` and `/en/login` resolve without 404 after route migration.
 - `/` redirects to `/zh` by default when no locale signal exists.
 - Invalid locale prefixes return `notFound()` or redirect consistently.
+- Static assets, Next internals, and API requests are not locale-redirected.
+- `npm run build` can find the `next-intl` request config.
 
 ## Phase 2: Route Migration and Navigation
 
@@ -80,13 +89,18 @@ Files likely touched:
 Tasks:
 
 1. Move user-facing routes under `frontend/src/app/[locale]/`.
-2. Keep or replace old unprefixed route files with redirects if middleware
+2. Keep or replace old unprefixed route files with redirects if proxy handling
    alone is not enough.
 3. Replace `next/link` and `next/navigation` usage with locale-aware helpers
    where internal navigation must preserve locale.
 4. Update hardcoded `router.push("/login")`, `router.push("/dashboard")`, and
    links to use locale-aware routes.
-5. Preserve query strings for auth callback and language changes.
+5. Update non-router redirects, including `window.location.href`, plain
+   `<a href>`, OAuth start URLs, and Axios interceptor fallbacks.
+6. Preserve query strings for auth callback and language changes.
+7. Grep for hardcoded route strings after migration:
+   `"/login"`, `"/register"`, `"/dashboard"`, `href="/`, and
+   `window.location.href`.
 
 Acceptance checks:
 
@@ -95,6 +109,7 @@ Acceptance checks:
 - Login success from `/en/login` lands on `/en/dashboard`.
 - Protected-route failures from `/zh/dashboard` land on `/zh/login`.
 - Existing dashboard links do not drop the locale prefix.
+- Refresh-token failure from `/en/...` redirects to `/en/login`.
 
 ## Phase 3: Core UI Localization
 
@@ -119,6 +134,9 @@ Tasks:
 3. Add `LocaleSwitcher` to auth pages and authenticated shell.
 4. On language switch, replace only the locale segment and preserve path/query.
 5. Persist anonymous user choice with `NEXT_LOCALE` cookie and local storage.
+6. After login, registration, or `/auth/me`, sync the returned
+   `preferred_locale` into `NEXT_LOCALE` unless the current URL explicitly
+   chooses a different locale.
 
 Acceptance checks:
 
@@ -126,6 +144,7 @@ Acceptance checks:
 - `/en/login` displays English UI text.
 - Switching language on a nested dashboard route stays on the same route.
 - Theme switching and language switching do not conflict.
+- Visiting `/` after a language switch uses the last selected locale.
 
 ## Phase 4: Backend Preference Support
 
@@ -150,6 +169,8 @@ Tasks:
 6. Add or extend an authenticated endpoint to update language preference.
 7. Ensure Google OAuth-created users get a valid preferred locale when locale
    state is available.
+8. Ensure login, registration, and `/auth/me` responses provide enough data for
+   the frontend to sync `NEXT_LOCALE`.
 
 Acceptance checks:
 
@@ -158,6 +179,7 @@ Acceptance checks:
 - `GET /api/v1/auth/me` returns `preferred_locale`.
 - Authenticated language switch persists preference.
 - Invalid locale values are rejected with 400.
+- The frontend can sync `preferred_locale` to `NEXT_LOCALE` after `/auth/me`.
 
 ## Phase 5: API Error Codes and Frontend Error Mapping
 
@@ -265,6 +287,8 @@ Browser checks:
 - `/en/dashboard`
 - Language switching on dashboard nested pages.
 - Registration, login, logout, refresh, protected redirect.
+- Refresh-token failure redirect from both `/zh/...` and `/en/...`.
+- Static asset and API URLs are not captured by locale redirects.
 
 Optional if Playwright is available:
 

@@ -40,12 +40,26 @@ user visits `/en/dashboard`, the interface renders in English even if the saved
 preference is Chinese. Preferences only decide future redirects, such as a visit
 to `/` or an unprefixed legacy path.
 
-Default language resolution order:
+Default language resolution order for entry redirects:
 
-1. Authenticated user's `preferred_locale`.
-2. `NEXT_LOCALE` cookie or local storage.
-3. Browser `Accept-Language`.
-4. `zh`.
+1. `NEXT_LOCALE` cookie.
+2. Browser `Accept-Language`.
+3. `zh`.
+
+The current auth token is stored in `localStorage`, so server-side routing code
+cannot reliably read the authenticated user before deciding where `/` should
+redirect. After login, registration, or a successful `/auth/me` request, the
+frontend should sync `user.preferred_locale` into `NEXT_LOCALE`. If auth later
+moves to HTTP-only cookies, entry redirects can be upgraded to read the user
+preference directly on the server.
+
+Client-side fallback order for components that run after hydration:
+
+1. URL locale prefix.
+2. Authenticated user's `preferred_locale`.
+3. `NEXT_LOCALE` cookie or local storage.
+4. Browser `Accept-Language`.
+5. `zh`.
 
 ## Frontend Architecture
 
@@ -67,18 +81,25 @@ frontend/src/i18n/navigation.ts
 frontend/src/i18n/request.ts
 frontend/messages/zh.json
 frontend/messages/en.json
-frontend/middleware.ts
+frontend/src/proxy.ts
+frontend/next.config.ts
 ```
 
 `routing.ts` defines supported locales, the default locale, and prefix behavior.
 `navigation.ts` exports locale-aware `Link`, `useRouter`, and `usePathname`.
-`request.ts` loads the correct message file for the active locale. Middleware
-redirects `/`, `/login`, `/register`, `/dashboard`, and other unprefixed app
-routes to the best locale-prefixed path.
+`request.ts` loads the correct message file for the active locale.
+`next.config.ts` must use the `next-intl` plugin so the request config is wired
+into the App Router build. `proxy.ts` redirects `/`, `/login`, `/register`,
+`/dashboard`, and other unprefixed app routes to the best locale-prefixed path,
+while excluding API routes, Next internals, and static assets. If the installed
+Next.js version requires the older file convention, use the same logic in
+`middleware.ts`, but keep the implementation isolated so it can be renamed.
 
-The root layout keeps global providers and delegates locale-specific metadata
-and messages to the `[locale]` layout. The document `lang` attribute should use
-the active BCP 47 locale (`zh-CN` or `en`).
+Use a locale root layout at `app/[locale]/layout.tsx` for the user-facing app.
+It should render `<html lang={...}>`, `<body>`, `Providers`, and
+`NextIntlClientProvider`. The document `lang` attribute should use the active
+BCP 47 locale (`zh-CN` or `en`). The top-level `app/layout.tsx`, if retained,
+must stay minimal and must not hardcode `lang="en"` for localized routes.
 
 ## Message Organization
 
@@ -132,6 +153,8 @@ languages should:
    path and query string.
 2. Write `NEXT_LOCALE` and local storage.
 3. If authenticated, persist the preference to the backend.
+4. Update in-memory auth state so later client-side redirects use the new
+   preference.
 
 Preference persistence failure must not block the UI route change. The UI should
 switch immediately because the URL controls the rendered language.
@@ -147,6 +170,11 @@ preferred_locale VARCHAR(10) NOT NULL DEFAULT 'zh'
 Expose the field in `UserResponse`. Registration should accept an optional
 locale from the current URL context so users who register from `/en/register`
 get `preferred_locale = "en"`.
+
+After login, registration, refresh recovery, and `/auth/me`, the frontend should
+copy the returned `preferred_locale` into the `NEXT_LOCALE` cookie unless the
+current URL already has an explicit locale. URL locale remains authoritative for
+the active page.
 
 Add a small preference update endpoint, either:
 
@@ -175,6 +203,11 @@ Frontend error handling should use this priority:
 
 Start by migrating auth errors and common dashboard errors. Other endpoints can
 move gradually as pages are localized.
+
+All auth redirects must be locale-aware. This includes `router.push`, `Link`,
+plain `<a href>`, OAuth start URLs, and Axios response interceptors such as a
+refresh-token failure. A redirect fallback from `/en/...` should go to
+`/en/login`, not `/login`.
 
 ## OAuth Compatibility
 
