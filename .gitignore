@@ -71,3 +71,6 @@ coverage/
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# Artifacts
+artifacts/
